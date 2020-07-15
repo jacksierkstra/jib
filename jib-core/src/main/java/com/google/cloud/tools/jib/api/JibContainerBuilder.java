@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -73,8 +74,7 @@ public class JibContainerBuilder {
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
-  private final ContainerBuildPlan.Builder containerBuildPlanBuilder =
-      ContainerBuildPlan.builder().setArchitectureHint("amd64").setOsHint("linux");
+  private final ContainerBuildPlan.Builder containerBuildPlanBuilder = ContainerBuildPlan.builder();
   // TODO(chanseok): remove and use containerBuildPlanBuilder instead. Note that
   // ContainerConfiguation implements equals() and hashCode(), so need to verify
   // if they are required.
@@ -490,6 +490,31 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Adds a platform to the platforms configurations for the container.
+   *
+   * @param os the os value
+   * @param architecture the architecture value
+   * @return this
+   */
+  public JibContainerBuilder addPlatform(String os, String architecture) {
+    containerBuildPlanBuilder.addPlatform(os, architecture);
+    containerConfigurationBuilder.addPlatform(os, architecture);
+    return this;
+  }
+
+  /**
+   * Sets the platforms configurations for the container.
+   *
+   * @param platforms the list of platform objects
+   * @return this
+   */
+  public JibContainerBuilder setPlatforms(Set<Platform> platforms) {
+    containerBuildPlanBuilder.setPlatforms(platforms);
+    containerConfigurationBuilder.setPlatforms(platforms);
+    return this;
+  }
+
+  /**
    * Sets the user and group to run the container as. {@code user} can be a username or UID along
    * with an optional groupname or GID.
    *
@@ -610,8 +635,7 @@ public class JibContainerBuilder {
       throws InvalidImageReferenceException {
     containerBuildPlanBuilder
         .setBaseImage(buildPlan.getBaseImage())
-        .setArchitectureHint(buildPlan.getArchitectureHint())
-        .setOsHint(buildPlan.getOsHint())
+        .setPlatforms(buildPlan.getPlatforms())
         .setCreationTime(buildPlan.getCreationTime())
         .setFormat(buildPlan.getFormat())
         .setEnvironment(buildPlan.getEnvironment())
@@ -625,6 +649,7 @@ public class JibContainerBuilder {
         .setLayers(buildPlan.getLayers());
 
     containerConfigurationBuilder
+        .setPlatforms(buildPlan.getPlatforms())
         .setCreationTime(buildPlan.getCreationTime())
         .setEnvironment(buildPlan.getEnvironment())
         .setLabels(buildPlan.getLabels())
